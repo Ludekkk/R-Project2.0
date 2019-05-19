@@ -11,7 +11,7 @@ rmix <- function(n,family_1,par_1,family_2,par_2,p){
   {
     sample1 <- fun(length(which(prob == 1)),par_1[1]) 
   }
-  else if (length(par_2) == 2) 
+  else if (length(par_1) == 2) 
   {
     sample1 <- fun(length(which(prob == 1)),par_1[1],par_1[2])
   }
