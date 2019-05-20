@@ -1,0 +1,13 @@
+---
+title: "Projekt2.0"
+author: "Michał Baran"
+date: "20 maja 2019"
+output: html_document
+---
+
+
+
+```{r}
+
+```
+
