@@ -80,7 +80,7 @@ Dzięki pomocy funkcji __rmix__ przeanalizuje moce testów zgodności dla miesza
 ***
 
 Najpierw zbadam czy zmiana wartości *n* oraz *p* istotnie wpływa na zmianę mocy testu.  
-Poniższa analiza powinna sprawdzić czy poniższe hipotezy są prawidłowe:  
+Poniższa analiza powinna sprawdzić czy poniższe hipotezy są prawdziwe:  
 
 ___Długość próby___  
 H0: Wzrost długości próby powoduje wzrost mocy testu  
@@ -112,14 +112,14 @@ alpha <- 0.1
 testy <- c("SW","JB")
 ```
 
-
+Tworzę ramke danych:
 ```{r}
 data1 <- expand.grid(n,p,testy)
 colnames(data1) <- c("Dlugosc", "Prawdopodobienstwo","Test")
 
 ```
 
-
+Dla każdej kombinacji z *data1* badam moc testów i zapisuje do wektora *powers*, który następnie dopisuje do ramki danych.
 ```{r}
 set.seed(20)
 
@@ -145,13 +145,20 @@ powers <- sapply(1:nrow(data1),
 data2 <- bind_cols(data1, Moc = powers)
 ```
 
-
+Tworzę wykres przedstawiający jak zmienia się moc testów w zależności od *n* i *p*:
 ```{r, warning= FALSE, echo=FALSE, message=FALSE}
 ggplot(data2,aes(x = Dlugosc, y = Moc, color = Test)) +
   labs(x = "Długość próby", y = "Moc") +
   geom_smooth() + 
   facet_wrap(~ Prawdopodobienstwo, nrow = 3)
 ```
+
+Jak można wnioskować z powyższej grafiki, w obu badanych przypadkach nie mamy podstaw do odrzucenia hipotezy zerowej. Oznacza to, że wraz ze wzrostem długości próby oraz prawdopodobieństwa wylosowanie liczby z pierwszego rozkładu moc testu również wzrasta.   
+
+***
+
+Następnym punktem, będzie zbadanie jak zmiana parametrów pierwszego rozkładu wpłynie na moc testów. 
+Aby to uczynić, tworzę nową ramkę danych dzięki której będę w stanie zmieniać pierwszy i drugi parametr w *par_1*.
 
 ```{r}
 #długość
@@ -167,8 +174,8 @@ zmiana <- seq(2,10, by = .25)
 data3 <- expand.grid(Dlugosc = n, Prawdo = p, Zmiana = zmiana, Test = testy)
 ```
 
-
-```{r}
+Przy wykorzystaniu tej samej metodyki co wcześniej, wykonuję badanie mocy testów oraz wizualiazcję.
+```{r, echo=FALSE, message=FALSE}
 set.seed(20)
 
 powers <- sapply(1:nrow(data3),
@@ -192,16 +199,13 @@ powers <- sapply(1:nrow(data3),
 
 data4 <- bind_cols(data3, Moc = powers)
 
-data4 %>%
-  ggplot(aes(x = Zmiana, y = Moc, color = Test)) +
-  labs(x = "Wartosc par1[1]", y = "Moc") +
+  ggplot(data4,aes(x = Zmiana, y = Moc, color = Test)) +
+  labs(title = "Zmiena mocy w zależności od par_1[1]", x = "Wartosc par1[1]", y = "Moc") +
   geom_smooth() + 
   facet_wrap(~ Dlugosc, nrow = 3)
 ```
 
-
-
-```{r}
+```{r, echo=FALSE, message=FALSE}
 set.seed(20)
 
 powers <- sapply(1:nrow(data3),
@@ -225,9 +229,95 @@ powers <- sapply(1:nrow(data3),
 
 data4 <- bind_cols(data3, Moc = powers)
 
-data4 %>%
-  ggplot(aes(x = Zmiana, y = Moc, color = Test)) +
-  labs(x = "Wartosc par1[1]", y = "Moc") +
+
+  ggplot(data4,aes(x = Zmiana, y = Moc, color = Test)) +
+  labs(title = "Zmiena mocy w zależności od par_1[2]", x = "Wartosc par1[2]", y = "Moc") +
   geom_smooth() + 
   facet_wrap(~ Dlugosc, nrow = 3)
 ```
+
+Jak widać na powyższych grafikach, moc testów maleje tylko w miejscu, gdzie parametry badanego przez nas rozkładu zbliżają się do wartości parametrów rozkładu drugiego. Spowodowane jest to faktem, że badane przez nas rozkłady w takiej syuacji nie różnią się od siebie znacząco.  
+
+***
+Ostatnim punktem będzie sprawdzenie czy zmiana parametrów drugiego rozkładu wpłynie istotnie na zmianę mocy testów.
+Postępnowanie, które wykonam będzie identyczne jak w punkcie powyżej.   
+  
+Oto otrzymane wyniki:
+
+```{r, echo=FALSE, message=FALSE}
+#długość
+n <- c(10,50,100,200)
+#prawdopodobieństwo
+p <- 0.6
+#par_2
+par1 <- c(6,2)
+#dane do zmiany
+zmiana <- seq(2,10, by = .25)
+
+data3 <- expand.grid(Dlugosc = n, Prawdo = p, Zmiana = zmiana, Test = testy)
+```
+
+```{r, echo=FALSE, message=FALSE}
+set.seed(20)
+powers <- sapply(1:nrow(data3),
+                 function(i){
+                   n <- data3[i, 1]
+                   par2 <- data3[i, 3]  
+                   test <- data3[i, 4]
+                   
+                   p_vector <- sapply(rep(n, N), function(x){
+                     sample <- rmix(n, "norm", par1, "norm", c(par2,1), p)
+                     
+                     if (test == "SW"){
+                       result <- shapiro.test(sample)$p.value
+                     } else if (test == "JB"){
+                       result <- jarque.bera.test(sample)$p.value
+                     }   
+                     result
+                   })
+                   mean(p_vector < alpha)
+                 })
+
+data4 <- bind_cols(data3, Moc = powers)
+
+  ggplot(data4,aes(x = Zmiana, y = Moc, color = Test)) +
+  labs(title = "Zmiena mocy w zależności od par_2[1]", x = "Wartosc par2[1]", y = "Moc") +
+  geom_smooth() + 
+  facet_wrap(~ Dlugosc, nrow = 3)
+```
+
+```{r, echo=FALSE, message=FALSE}
+set.seed(20)
+powers <- sapply(1:nrow(data3),
+                 function(i){
+                   n <- data3[i, 1]
+                   par2 <- data3[i, 3]  
+                   test <- data3[i, 4]
+                   
+                   p_vector <- sapply(rep(n, N), function(x){
+                     sample <- rmix(n, "norm", par1, "norm", c(1,par2), p)
+                     
+                     if (test == "SW"){
+                       result <- shapiro.test(sample)$p.value
+                     } else if (test == "JB"){
+                       result <- jarque.bera.test(sample)$p.value
+                     }   
+                     result
+                   })
+                   mean(p_vector < alpha)
+                 })
+
+data4 <- bind_cols(data3, Moc = powers)
+
+
+  ggplot(data4,aes(x = Zmiana, y = Moc, color = Test)) +
+  labs(title = "Zmiena mocy w zależności od par_2[2]", x = "Wartosc par2[2]", y = "Moc") +
+  geom_smooth() + 
+  facet_wrap(~ Dlugosc, nrow = 3)
+```
+
+Grafiki pokazują, że moc testów zachowuje się prawie identycznie jak w momencie zmiany parametrów pierwszego rozkładu - gdy wartość parametrów zbliża się do wartości z rozkładu pierwszego moc maleje.  
+
+***
+
+### Zadanie 3  
