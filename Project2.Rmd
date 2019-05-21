@@ -1,5 +1,5 @@
 ---
-title: "Projekt2.0"
+title: "Projekt 2.0"
 author: "Michał Baran"
 date: "20 maja 2019"
 output: html_document
@@ -12,6 +12,89 @@ library(ggplot2)
 library(tseries)
 ```
 
+### Wprowadzenie
+Celem projektu jest stworzenie funkcji symulującej próbki z rozkładów mieszanych oraz analiza mocy testów zgodności oraz rangowych dla próbek otrzymanych w ten sposób. Analiza będzie polegać na stworzeniu ramek danych uwzględniających moce testów w zależności od:  
+* Długości próby.  
+* Prawdopodobieństwa wylosowania liczby z pierwszego rozkładu.  
+* Parametrów poszczególnych rozkładów.  
+
+***
+
+Do wykonania projektu posłużę się trzema testami:
+
+- __Jarque Bera__  
+Test ten jest najczęściej uzywanym testem w ekonometrii.Powodem tego jest jego prostota oraz znana nieskomplikowana postać rozkładu asymptotycznego. Konstrukcja statystyki testowej bazuje na wartościach momentów rozkłądu zmiennej losowej obliczonych na podstawie próby empiryczniej i porównaniu ich z momentami teoretycznumi rozkładu normalnego. Test weryfikuje hipotezę o jednowymiarowej normalności zmiennej losowej przeciwko innemu dowolnemu rozkładowi.
+
+- __Shapiro-Wilka__  
+Test ten jest uznawany za najlepszy do sprawdzania normalności rozkładu zmiennej losowej, ponieważ charakteryzuje go duża moc, czyli duże prawdopodobieństwo odrzucenia hipotezy zerowej jeśli jest ona fałszywa. Polecany jest dla małych próbek, ponieważ gdy liczba obserwacji przekracza 2000 może zwracać blędne wyniki. Test weryfikuje hipotezę mówiącą o o tym, że rozkład naszej zmiennej jest zbliżony do normalnego.  
+
+- __Wilcoxona__  
+Jest nieparametryczną alternatywą dla testu t-Studenta dla przypadku dwóch równolicznych próbek dających sis połączyć w pary. Często używa się tego testu do porównywania danych zebranych przed i po eksperymencie, w celu zbadania, czy nastąpiła istotna statystycznie zmiana.  
+
+***
+Dane którymi będę się posługiwał przedstawię w postaci wektorów.  
+
+1. *p* - prawdopodobieństwo wylosowania liczby z pierwszego rozkładu 
+2. *n* - długości próby  
+3. *par1* - parametry pierwszego rozkładu  
+4. *par2* - parametry drugiego rozkładu  
+
+***
+
+###Zadanie 1  
+Podstawą całego projektu będzie stworzenie funkcji __rmix__, która pozwoli mi na symulowanie próbek z rozkładów mieszanych. Jej parametrami będą:  
+-- __n__ - długość próby  
+-- __family_1__ - pierwszy typ rozkładu  
+-- __par_1__ - parametry pierwszego rozkładu  
+-- __family_2__ - drugi typ rozkładu  
+-- __par_2__ - parametry drugiego rozkładu  
+-- __p__ - prawdopodobieństwo, że liczba pochodzi z pierwszego rozkładu  
+
+***
+
+Funkcja w oparciu o wektor __prob__, który jest wektorem posiadającym jedynie liczby *1* oraz *2* bada ile należy wylosować liczb z każdego z rozkładów. Następnie tworzy dwie próbki, które są wartościami pochodzącymi z wybranych przez nas rozkladów. Na końcu funkcja zwraca wektor, który jest połaczeniem obu tych próbek.  
+```{r}
+rmix <- function(n,family_1,par_1,family_2,par_2,p){
+  
+  prob <- sample(c(1,2), n, prob = c(p, 1-p), replace = T)
+  
+  sample1 <- eval(
+    parse( text = 
+             paste0("r", family_1, "(length(which(prob == 1)), ", 
+                    paste(par_1, collapse = ", "),
+                    ")"))
+  )
+  sample2 <- eval(
+    parse( text = 
+             paste0("r", family_2, "(length(which(prob == 2)), ", 
+                    paste(par_2, collapse = ","),
+                    ")"))
+  )
+  c(sample1,sample2)
+}
+```
+
+###Zadanie 2  
+Dzięki pomocy funkcji __rmix__ przeanalizuje moce testów zgodności dla mieszanki dwóch rozkładów normalnych przy hipotezie zerowej o rozkładzie normalnym.  
+
+***
+
+Najpierw zbadam czy zmiana wartości *n* oraz *p* istotnie wpływa na zmianę mocy testu.  
+Poniższa analiza powinna sprawdzić czy poniższe hipotezy są prawidłowe:  
+
+___Długość próby___  
+H0: Wzrost długości próby powoduje wzrost mocy testu  
+H1: Wzrost długości próby powoduje spadek mocy testu  
+
+___Poziom prawdopodobieństwa wystąpienia zmiennych z pierwszego rozkładu___  
+H0: Wzrost prawdopodobieństwa powoduje wzrost mocy testu  
+H1: Wzrost prawdopodobieństwa powoduje spadek mocy testu  
+
+Oczekiwanym rezultatem jest brak podstaw do odrzucenia hipotezy zerowej.  
+
+***
+
+Wprowadzam wartości poszczególnych zmiennych:
 ```{r}
 #długość
 n <- c(10,50,100,200)
@@ -23,9 +106,9 @@ par1 <- c(5,4)
 par2 <- c(10,5)
 #ilość symulacji
 N <- 100
-#alpha
+#alpha, która pozwala na badanie mocy testów
 alpha <- 0.1
-#testy
+#testy - skrótowe nazy testów którymi posługuję się w projekcie
 testy <- c("SW","JB")
 ```
 
