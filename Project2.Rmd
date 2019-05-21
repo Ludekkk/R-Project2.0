@@ -18,9 +18,9 @@ n <- c(10,50,100,200)
 #prawdopodobieństwo
 p <- c(0.1,0.3,0.5,0.9)
 #par_1
-par1 <- c(2,1)
+par1 <- c(5,4)
 #par_2
-par2 <- c(1,5)
+par2 <- c(10,5)
 #ilość symulacji
 N <- 100
 #alpha
@@ -38,7 +38,6 @@ colnames(data1) <- c("Dlugosc", "Prawdopodobienstwo","Test")
 
 
 ```{r}
-#ustawienie ziarna generatora na 20
 set.seed(20)
 
 powers <- sapply(1:nrow(data1),
@@ -63,3 +62,89 @@ powers <- sapply(1:nrow(data1),
 data2 <- bind_cols(data1, Moc = powers)
 ```
 
+
+```{r, warning= FALSE, echo=FALSE, message=FALSE}
+ggplot(data2,aes(x = Dlugosc, y = Moc, color = Test)) +
+  labs(x = "Długość próby", y = "Moc") +
+  geom_smooth() + 
+  facet_wrap(~ Prawdopodobienstwo, nrow = 3)
+```
+
+```{r}
+#długość
+n <- c(10,50,100,200)
+#prawdopodobieństwo
+p <- 0.6
+#par_2
+par2 <- c(6,2)
+#dane do zmiany
+zmiana <- seq(2,10, by = .25)
+
+
+data3 <- expand.grid(Dlugosc = n, Prawdo = p, Zmiana = zmiana, Test = testy)
+```
+
+
+```{r}
+set.seed(20)
+
+powers <- sapply(1:nrow(data3),
+                 function(i){
+                   n <- data3[i, 1]
+                   par1 <- data3[i, 3]  
+                   test <- data3[i, 4]
+                   
+                   p_vector <- sapply(rep(n, N), function(x){
+                     sample <- rmix(n, "norm", c(par1,1), "norm", par2, p)
+                     
+                     if (test == "SW"){
+                       result <- shapiro.test(sample)$p.value
+                     } else if (test == "JB"){
+                       result <- jarque.bera.test(sample)$p.value
+                     }   
+                     result
+                   })
+                   mean(p_vector < alpha)
+                 })
+
+data4 <- bind_cols(data3, Moc = powers)
+
+data4 %>%
+  ggplot(aes(x = Zmiana, y = Moc, color = Test)) +
+  labs(x = "Wartosc par1[1]", y = "Moc") +
+  geom_smooth() + 
+  facet_wrap(~ Dlugosc, nrow = 3)
+```
+
+
+
+```{r}
+set.seed(20)
+
+powers <- sapply(1:nrow(data3),
+                 function(i){
+                   n <- data3[i, 1]
+                   par1 <- data3[i, 3]  
+                   test <- data3[i, 4]
+                   
+                   p_vector <- sapply(rep(n, N), function(x){
+                     sample <- rmix(n, "norm", c(1,par1), "norm", par2, p)
+                     
+                     if (test == "SW"){
+                       result <- shapiro.test(sample)$p.value
+                     } else if (test == "JB"){
+                       result <- jarque.bera.test(sample)$p.value
+                     }   
+                     result
+                   })
+                   mean(p_vector < alpha)
+                 })
+
+data4 <- bind_cols(data3, Moc = powers)
+
+data4 %>%
+  ggplot(aes(x = Zmiana, y = Moc, color = Test)) +
+  labs(x = "Wartosc par1[1]", y = "Moc") +
+  geom_smooth() + 
+  facet_wrap(~ Dlugosc, nrow = 3)
+```
