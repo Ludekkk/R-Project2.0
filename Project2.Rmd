@@ -321,3 +321,58 @@ Grafiki pokazują, że moc testów zachowuje się prawie identycznie jak w momen
 ***
 
 ### Zadanie 3  
+Dzięki pomocy funkcji __rmix__ przeanalizuje moc testu Wilcoxona dla mieszanki rozkładów Poissona przy hipotezie zerowej o rozkładzie Poissona. W analizie sprawdzę jak zmiana *n*, *p* oraz *par_2* wpłynie na moc. *par_1* przez cały czas zostanie niezmienione.
+
+***
+
+Wprowadzam wartości zmiennych i tworzę pomocniczą ramkę danych:
+```{r}
+#długość
+n <- c(50,100,200)
+#prawdopodobieństwo
+p <- c(0.3,0.5,0.9)
+#par_1
+par1 <- c(10)
+#par_2
+par2 <- c(1:25) 
+#ilość symulacji
+N <- 100
+#alpha, która pozwala na badanie mocy testów
+alpha <- 0.5
+
+data1 <- expand.grid(Par2 = par2, Dlugosc = n, Prawdo = p)
+p_vector <- 0
+powers1 <- 0
+```
+
+
+Przy pomocy pętli __for__ tworze wektor *powers* w którym zbieram moce testu dla każdego zestawienia zmiennych, a następnie dopisuje go do ramki danych:
+```{r, warning = FALSE}
+set.seed(20)
+for (i in 1:nrow(data1)) {
+  n <- data1[i, 2]
+  par2 <- data1[i, 1]  
+  p <- data1[i, 3]
+  for (j in 1:N) {
+    sample <- rmix(n, "pois", par1, "pois", par2, p)
+    sampleP <- rpois(n, par1)
+    p_vector[j] <- wilcox.test(sample, sampleP, paired = T)$p.value 
+  }
+  powers1[i] <- mean(p_vector < alpha)
+}
+```
+
+```{r}
+data2 <- bind_cols(data1, Moc = powers1)
+```
+
+W oparciu o wcześniej stworzoną ramkę tworzę wykres przedstawiający zmianę mocu testu:
+```{r, warning = FALSE, message = FALSE}
+  ggplot(data2) +
+  labs(x = "Par_2", y = "Moc") +
+  geom_smooth(aes(x = Par2, y = Moc, color = factor(Dlugosc))) + 
+  facet_wrap(~ Prawdo, nrow = 4)
+```
+
+Z powyższej grafiki możemy wywnioskować, że wraz ze wzrostem długości próby, rośnie moc testu. Odwrotną sytuację możemy zaobserwować przy zwiększaniu prawdopodobieństwa wylosowania liczby z pierwszego rozkładu - wtedy moc testu maleje. Natomiast przy zmianie *par2* widzimy, że moc testu spada gdy wartość tego parametru jest w pobliżu wartości
+*par1*. Dzieje się tak, ponieważ w tym miejscu próbka mieszana jest prawie taka sama jak ta, z którą ją porównujemy.
