@@ -149,8 +149,9 @@ Tworzę wykres przedstawiający jak zmienia się moc testów w zależności od *
 ```{r, warning= FALSE, echo=FALSE, message=FALSE}
 ggplot(data2,aes(x = Dlugosc, y = Moc, color = Test)) +
   labs(x = "Długość próby", y = "Moc") +
-  geom_smooth() + 
-  facet_wrap(~ Prawdopodobienstwo, nrow = 3)
+  geom_smooth(se = F) + 
+  facet_wrap(~ Prawdopodobienstwo, nrow = 3) +
+  ylim(0,1)
 ```
 
 Jak można wnioskować z powyższej grafiki, w obu badanych przypadkach nie mamy podstaw do odrzucenia hipotezy zerowej. Oznacza to, że wraz ze wzrostem długości próby oraz prawdopodobieństwa wylosowanie liczby z pierwszego rozkładu moc testu również wzrasta.   
@@ -201,8 +202,9 @@ data4 <- bind_cols(data3, Moc = powers)
 
   ggplot(data4,aes(x = Zmiana, y = Moc, color = Test)) +
   labs(title = "Zmiena mocy w zależności od par_1[1]", x = "Wartosc par1[1]", y = "Moc") +
-  geom_smooth() + 
-  facet_wrap(~ Dlugosc, nrow = 3)
+  geom_smooth(se = F) + 
+  facet_wrap(~ Dlugosc, nrow = 3) +
+  ylim(0,1)
 ```
 
 ```{r, echo=FALSE, message=FALSE}
@@ -232,8 +234,9 @@ data4 <- bind_cols(data3, Moc = powers)
 
   ggplot(data4,aes(x = Zmiana, y = Moc, color = Test)) +
   labs(title = "Zmiena mocy w zależności od par_1[2]", x = "Wartosc par1[2]", y = "Moc") +
-  geom_smooth() + 
-  facet_wrap(~ Dlugosc, nrow = 3)
+  geom_smooth(se = F) + 
+  facet_wrap(~ Dlugosc, nrow = 3) +
+  ylim(0,1)
 ```
 
 Jak widać na powyższych grafikach, moc testów maleje tylko w miejscu, gdzie parametry badanego przez nas rozkładu zbliżają się do wartości parametrów rozkładu drugiego. Spowodowane jest to faktem, że badane przez nas rozkłady w takiej syuacji nie różnią się od siebie znacząco.  
@@ -282,8 +285,9 @@ data4 <- bind_cols(data3, Moc = powers)
 
   ggplot(data4,aes(x = Zmiana, y = Moc, color = Test)) +
   labs(title = "Zmiena mocy w zależności od par_2[1]", x = "Wartosc par2[1]", y = "Moc") +
-  geom_smooth() + 
-  facet_wrap(~ Dlugosc, nrow = 3)
+  geom_smooth(se = F) + 
+  facet_wrap(~ Dlugosc, nrow = 3) +
+  ylim(0,1)
 ```
 
 ```{r, echo=FALSE, message=FALSE}
@@ -312,8 +316,9 @@ data4 <- bind_cols(data3, Moc = powers)
 
   ggplot(data4,aes(x = Zmiana, y = Moc, color = Test)) +
   labs(title = "Zmiena mocy w zależności od par_2[2]", x = "Wartosc par2[2]", y = "Moc") +
-  geom_smooth() + 
-  facet_wrap(~ Dlugosc, nrow = 3)
+  geom_smooth(se = F) + 
+  facet_wrap(~ Dlugosc, nrow = 3) +
+  ylim(0,1)
 ```
 
 Grafiki pokazują, że moc testów zachowuje się prawie identycznie jak w momencie zmiany parametrów pierwszego rozkładu - gdy wartość parametrów zbliża się do wartości z rozkładu pierwszego moc maleje.  
@@ -341,6 +346,9 @@ N <- 100
 alpha <- 0.5
 
 data1 <- expand.grid(Par2 = par2, Dlugosc = n, Prawdo = p)
+```
+
+```{r, echo = FALSE}
 p_vector <- 0
 powers1 <- 0
 ```
@@ -367,11 +375,12 @@ data2 <- bind_cols(data1, Moc = powers1)
 ```
 
 W oparciu o wcześniej stworzoną ramkę tworzę wykres przedstawiający zmianę mocu testu:
-```{r, warning = FALSE, message = FALSE}
+```{r, warning = FALSE, message = FALSE,echo = FALSE}
   ggplot(data2) +
   labs(x = "Par_2", y = "Moc") +
-  geom_smooth(aes(x = Par2, y = Moc, color = factor(Dlugosc))) + 
-  facet_wrap(~ Prawdo, nrow = 4)
+  geom_smooth(aes(x = Par2, y = Moc, color = factor(Dlugosc)), se = F) + 
+  facet_wrap(~ Prawdo, nrow = 4) +
+  ylim(0,1)
 ```
 
 Z powyższej grafiki możemy wywnioskować, że wraz ze wzrostem długości próby, rośnie moc testu. Odwrotną sytuację możemy zaobserwować przy zwiększaniu prawdopodobieństwa wylosowania liczby z pierwszego rozkładu - wtedy moc testu maleje. Natomiast przy zmianie *par2* widzimy, że moc testu spada gdy wartość tego parametru jest w pobliżu wartości
